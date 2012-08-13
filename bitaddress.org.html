@@ -4296,10 +4296,13 @@
 					document.getElementById("btcaddress" + idPostFix).innerHTML = bitcoinAddress;
 					document.getElementById("btcprivwif" + idPostFix).innerHTML = privateKeyWif;
 
-					var keyValuePair = {};
+					var keyValuePair = {}
 					keyValuePair["qrcode_public" + idPostFix] = bitcoinAddress;
-					keyValuePair["qrcode_private" + idPostFix] = privateKeyWif;
-					ninja.qrCode.showQrCode(keyValuePair);
+					ninja.qrCode.showQrCode(keyValuePair, 175);
+
+					var keyValuePair = {}
+					keyValuePair["qrcode_private" + idPostFix] = bitcoinAddress;
+					ninja.qrCode.showQrCode(keyValuePair, 200);
 				}
 				// browsers that failed to generate keys
 				else {
@@ -4328,15 +4331,17 @@
 					return null;
 				},
 
-				createCanvas: function (text) {
+				createCanvas: function (text, maxSize) {
 					// create the qrcode itself
+					maxSize = maxSize || 200;
 					var typeNumber = ninja.qrCode.getTypeNumber(text);
 					var qrcode = new QRCode(typeNumber, QRCode.ErrorCorrectLevel.H);
 					qrcode.addData(text);
 					qrcode.make();
 
-					var width = qrcode.getModuleCount() * 2;
-					var height = qrcode.getModuleCount() * 2;
+					//var width = maxSize/qrcode.getModuleCount();
+					var width = maxSize
+					var height = width;
 
 					// create canvas element
 					var canvas = document.createElement('canvas');
@@ -4351,7 +4356,7 @@
 					for (var row = 0; row < qrcode.getModuleCount(); row++) {
 						for (var col = 0; col < qrcode.getModuleCount(); col++) {
 							ctx.fillStyle = qrcode.isDark(row, col) ? "#000000" : "#ffffff";
-							ctx.fillRect(col * tileW, row * tileH, tileW, tileH);
+							ctx.fillRect(col * tileW, row * tileH, tileW*1.1, tileH*1.1);
 						}
 					}
 
@@ -4389,13 +4394,13 @@
 				// example: { "id1": "string1", "id2": "string2"}
 				//		"id1" is the id of a div element where you want a QRCode inserted.
 				//		"string1" is the string you want encoded into the QRCode.
-				showQrCode: function (keyValuePair) {
+				showQrCode: function (keyValuePair, size) {
 					for (var key in keyValuePair) {
 						var value = keyValuePair[key];
 						try {
 							if (document.getElementById(key)) {
 								document.getElementById(key).innerHTML = "";
-								document.getElementById(key).appendChild(ninja.qrCode.createCanvas(value));
+								document.getElementById(key).appendChild(ninja.qrCode.createCanvas(value, size));
 							}
 						}
 						catch (e) {
@@ -4664,10 +4669,9 @@
 							var privWif = btcKey.getBitcoinWalletImportFormat();
 							document.getElementById("brainbtcaddress").innerHTML = bitcoinAddress;
 							document.getElementById("brainbtcprivwif").innerHTML = privWif;
-							ninja.qrCode.showQrCode({
-								"brainqrcodepublic": bitcoinAddress,
-								"brainqrcodeprivate": privWif
-							});
+
+							ninja.qrCode.showQrCode({'brainqrcodepublic': bitcoinAddress}, 175);
+							ninja.qrCode.showQrCode({'brainqrcodeprivate': privWif}, 200);
 							document.getElementById("brainkeyarea").style.display = "block";
 						}
 						else {
