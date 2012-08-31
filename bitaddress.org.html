@@ -3987,6 +3987,7 @@
 			#singlecommands { visibility: hidden; }
 			#bulkcommands { display: none; }
 			#papercommands { display: none; }
+			#bcicommands { display: none; }
 			#braincommands { display: none; }
 			#braincommands .row.notes { font-size: 80%; padding: 6px 0 0 0; }
 			#brainpassphrase { width: 280px; }
@@ -4047,6 +4048,7 @@
 		<div class="menu">
 			<div class="tab selected" id="singlewallet" onclick="ninja.tabSwitch(this);">Single Wallet</div>
 			<div class="tab" id="paperwallet" onclick="ninja.tabSwitch(this);">Paper Wallet</div>
+			<div class="tab" id="bcibackup" onclick="ninja.tabSwitch(this);">BCI Backup</div>
 			<div class="tab" id="bulkwallet" onclick="ninja.tabSwitch(this);">Bulk Wallet</div>
 			<div class="tab" id="brainwallet" onclick="ninja.tabSwitch(this);">Brain Wallet</div>
 			<div class="tab" id="detailwallet" onclick="ninja.tabSwitch(this);">Wallet Details</div>
@@ -4057,6 +4059,12 @@
 				<span><input type="button" id="newaddress" value="Generate New Address" onclick="ninja.generateNewAddressAndKey();" /></span>
 				<span class="print"><input type="button" name="print" value="Print" onclick="window.print();" /></span>
 			</div>
+
+      <div id="bcicommands">
+        <span>Blockchain.info JSON export:<br/><textarea id="bcijson" rows="5" cols="70"></textarea></span>
+        <span><input type="button" id="bcigenerate" value="Generate" onclick="window.bcigenerate_click();" /> </span>
+        <span class="print"><input type="button" name="print" value="Print" onclick="window.print();" /></span>
+      </div>
 
 			<div id="papercommands">
 				<span>Addresses per page: <input type="text" id="paperlimitperpage" value="7" /></span>
@@ -4545,6 +4553,30 @@
 					}
 				},
 
+				bcibackup: {
+				  open: function() {
+				    for (var wType in ninja.walletType) {
+							ninja.wallets[wType].close();
+						}
+
+						document.getElementById("main").setAttribute("class", "paper"); // add 'paper' class to main div
+
+						var paperArea = document.getElementById("paperarea");
+						paperArea.style.display = "block";
+						document.getElementById("bcicommands").style.display = "block";
+
+            paperArea.innerHTML = "";
+            // if (paperArea.innerHTML == "") {
+            //  ninja.wallets.paperwallet.build(7);
+            // }
+				  },
+
+				  close: function() {
+						document.getElementById("paperarea").style.display = "none";
+						document.getElementById("bcicommands").style.display = "none";				    
+				  }
+				},
+
 				paperwallet: {
 					open: function () {
 						for (var wType in ninja.walletType) {
@@ -4838,7 +4870,7 @@
 				}
 			},
 
-			walletType: { "singlewallet": "singlewallet", "paperwallet": "paperwallet", "bulkwallet": "bulkwallet", "brainwallet": "brainwallet", "detailwallet": "detailwallet" },
+			walletType: { "singlewallet": "singlewallet", "paperwallet": "paperwallet", "bcibackup": "bcibackup", "bulkwallet": "bulkwallet", "brainwallet": "brainwallet", "detailwallet": "detailwallet" },
 
 			getQueryString: function () {
 				var result = {}, queryString = location.search.substring(1), re = /([^&=]+)=([^&]*)/g, m;
@@ -4862,5 +4894,57 @@
 		// if users does not move mouse after random amount of time then generate the key anyway.
 		setTimeout(ninja.wallets.singlewallet.forceGenerate, ninja.seedLimit * 20);
 	</script>
+
+  <!-- ErebusBat section to print a BlockChain.info backup -->  
+	<script type="text/coffeescript">
+    append_key = (key) ->
+      paperArea = document.getElementById("paperarea")
+      pageBreakAt = document.getElementById("paperlimitperpage").value * 1;
+      pageBreakAt = (pageBreakAt > 0) ? pageBreakAt : 7
+      @count++
+      div = document.createElement("div")      
+      div.setAttribute("class", "keyarea")
+      walletHtml = "
+        <div class='public'>
+          <div class='qrcode_public' id='bciqr_pub#{@count}'></div>
+          <div class='pubaddress'>
+            <span class='output'>#{key.addr}</span>
+          </div>
+        </div>
+        <div class='private'>
+          <div class='qrcode_private' id='bciqr_priv#{@count}'></div>
+          <div class='privwif'>
+            <span class='output'>#{key.priv}</span>
+          </div>          
+        </div>
+      "
+      div.innerHTML = walletHtml
+
+      #// See if we need to do a pagebreak
+      if paperArea.innerHTML != "" 
+        if @count % pageBreakAt == 1
+          pBreak = document.createElement("div");
+          pBreak.setAttribute("class", "pagebreak");
+          document.getElementById("paperarea").appendChild(pBreak);
+          div.style.pageBreakBefore = "always";
+          div.style.borderTop = "2px solid green";
+
+      paperArea.appendChild(div)
+
+      #//QR codes, pub then priv
+      qr = []
+      qr["bciqr_pub#{@count}"] = key.addr
+      ninja.qrCode.showQrCode qr, 175
+      qr = []
+      qr["bciqr_priv#{@count}"] = key.priv
+      ninja.qrCode.showQrCode qr, 200
+
+    window.bcigenerate_click = () ->
+      document.getElementById("paperarea").innerHTML = ""
+      json = JSON.parse(document.getElementById("bcijson").value)
+      @count = 0
+      append_key key for key in json.keys
+	</script>
+	<script type="text/javascript" src="http://coffeescript.org/extras/coffee-script.js"></script>
 </body>
 </html>
