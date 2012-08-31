@@ -4060,7 +4060,7 @@
 		<div class="menu">
 			<div class="tab selected" id="singlewallet" onclick="ninja.tabSwitch(this);">Single Wallet</div>
 			<div class="tab" id="paperwallet" onclick="ninja.tabSwitch(this);">Paper Wallet</div>
-			<div class="tab" id="bcibackup" onclick="ninja.tabSwitch(this);">BCI Backup</div>
+			<div class="tab" id="bcibackup" onclick="ninja.tabSwitch(this);">External Backup</div>
 			<div class="tab" id="bulkwallet" onclick="ninja.tabSwitch(this);">Bulk Wallet</div>
 			<div class="tab" id="brainwallet" onclick="ninja.tabSwitch(this);">Brain Wallet</div>
 			<div class="tab" id="detailwallet" onclick="ninja.tabSwitch(this);">Wallet Details</div>
@@ -4073,7 +4073,14 @@
 			</div>
 
       <div id="bcicommands">
-        <div>Blockchain.info JSON export:<br/><textarea id="bcijson" rows="5" cols="70"></textarea></div>        
+        <div>Export Data:<br/><textarea id="bcitextarea" rows="5" cols="70"></textarea></div>     
+        <div style="float: left; margin-left: 15px">
+          Format:
+          <select id="bciformat">
+            <option value="json" selected="selected">Blockchain.info JSON</option>
+            <option value="vanity">Vanity</option>
+          </select>
+        </div>   
         <span style=""><input type="button" id="bcigenerate" value="Generate" onclick="window.bcigenerate_click();" /> </span>
         <span class=""><input type="button" name="print" value="Print" onclick="window.print();" /></span>
       </div>
@@ -4958,11 +4965,39 @@
       qr["bciqr_priv#{@count}"] = key.priv
       ninja.qrCode.showQrCode qr, 200
 
+    generate_json_keys = () ->
+      json = JSON.parse(document.getElementById("bcitextarea").value)
+      append_key key for key in json.keys
+      
+    generate_vanity_keys = () ->
+      lines = document.getElementById("bcitextarea").value.split('\n')
+      key = {}
+      for line in lines
+        rx = line.match /^([a-z]+): ([a-z0-9]*)/i
+        continue if rx == null
+        #debugger
+        if rx[1] == "Pattern"
+          key.addr = ""
+          key.priv = ""
+        else if rx[1] == 'Address'
+          key.addr = rx[2]
+        else if rx[1] == 'Privkey'
+          key.priv = rx[2]
+          append_key key 
+      null
+    
     window.bcigenerate_click = () ->
       document.getElementById("paperarea").innerHTML = ""
-      json = JSON.parse(document.getElementById("bcijson").value)
       @count = 0
-      append_key key for key in json.keys
+      
+      format = document.getElementById("bciformat").value
+      
+      switch format
+        when "json" then generate_json_keys()
+        when "vanity" then generate_vanity_keys()
+        else
+          alert "ERROR: I don't know how to decode #{format}!"
+      
 	</script>
 	<script type="text/javascript" src="http://coffeescript.org/extras/coffee-script.js"></script>
 </body>
