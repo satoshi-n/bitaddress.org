@@ -4910,6 +4910,7 @@
   <!-- ErebusBat section to print a BlockChain.info backup -->  
 	<script type="text/coffeescript">
     append_key = (key) ->
+      return if key.priv == undefined
       paperArea = document.getElementById("paperarea")
       pageBreakAt = document.getElementById("paperlimitperpage").value * 1;
       pageBreakAt = (pageBreakAt > 0) ? pageBreakAt : 7
