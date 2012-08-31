@@ -4911,6 +4911,7 @@
 	<script type="text/coffeescript">
     append_key = (key) ->
       return if key.priv == undefined
+      key.label = "" if key.label == undefined
       paperArea = document.getElementById("paperarea")
       pageBreakAt = document.getElementById("paperlimitperpage").value * 1;
       pageBreakAt = (pageBreakAt > 0) ? pageBreakAt : 7
